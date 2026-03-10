@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Makina Maliyet Analizi - Deneme Arayüzü</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --primary: #22c55e;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, #0b1220, #0f172a);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px 32px;
+    }
+
+    h1, h2, h3 { margin: 0 0 10px; }
+    p { margin: 0 0 14px; color: var(--muted); }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    .card {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    label {
+      font-size: 0.86rem;
+      color: #cbd5e1;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0b1220;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #253248;
+      padding: 8px;
+      text-align: left;
+      font-size: 0.88rem;
+      vertical-align: top;
+    }
+
+    th { color: #bfdbfe; font-weight: 600; }
+
+    .btn {
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: white;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .btn-primary { background: var(--primary); }
+    .btn-danger { background: var(--danger); }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+      background: #0b1220;
+    }
+
+    .metric .label { color: #94a3b8; font-size: 0.8rem; }
+    .metric .value { font-size: 1.1rem; margin-top: 4px; }
+
+    .hint { font-size: 0.8rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Makina Maliyet Analizi (HTML Deneme)</h1>
+    <p>BOM, işçilik kalemleri, genel gider sabitleri ve döviz/kaynak fiyatları ile toplam makina maliyeti hesaplama arayüzü.</p>
+
+    <div class="grid">
+      <section class="card">
+        <h2>1) Genel Sabitler</h2>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px;">
+          <div>
+            <label for="kurUsd">USD/TRY Kuru</label>
+            <input id="kurUsd" type="number" step="0.01" value="32" />
+          </div>
+          <div>
+            <label for="kurEur">EUR/TRY Kuru</label>
+            <input id="kurEur" type="number" step="0.01" value="35" />
+          </div>
+          <div>
+            <label for="elektrikBirim">Elektrik (TRY/kWh)</label>
+            <input id="elektrikBirim" type="number" step="0.01" value="3.4" />
+          </div>
+          <div>
+            <label for="suBirim">Su (TRY/m³)</label>
+            <input id="suBirim" type="number" step="0.01" value="25" />
+          </div>
+          <div>
+            <label for="sigortaAylik">Aylık Sigorta Gideri (TRY)</label>
+            <input id="sigortaAylik" type="number" step="0.01" value="40000" />
+          </div>
+          <div>
+            <label for="aylikUretim">Aylık Üretim Adedi</label>
+            <input id="aylikUretim" type="number" step="1" value="8" />
+          </div>
+          <div>
+            <label for="yakitFiyati">Yakıt (TRY/L)</label>
+            <input id="yakitFiyati" type="number" step="0.01" value="45" />
+          </div>
+          <div>
+            <label for="metalSabit">Metal Fiyat Çarpanı</label>
+            <input id="metalSabit" type="number" step="0.01" value="1" />
+          </div>
+          <div>
+            <label for="ameltaSabit">Amelta Malzeme Çarpanı</label>
+            <input id="ameltaSabit" type="number" step="0.01" value="1" />
+          </div>
+        </div>
+        <p class="hint">Sigorta gideri makina başına: aylık sigorta / aylık üretim adedi.</p>
+      </section>
+
+      <section class="card">
+        <h2>2) İşçilik Birim Fiyatları (TRY/saat)</h2>
+        <label for="uKaynak">Kaynak</label>
+        <input id="uKaynak" type="number" step="0.01" value="550" />
+
+        <label for="uTalas">Talaşlı İmalat</label>
+        <input id="uTalas" type="number" step="0.01" value="700" />
+
+        <label for="uMontaj">Montaj</label>
+        <input id="uMontaj" type="number" step="0.01" value="450" />
+
+        <label for="uBoya">Boya</label>
+        <input id="uBoya" type="number" step="0.01" value="400" />
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:16px;">
+      <h2>3) BOM Satırı Ekle</h2>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap:10px;">
+        <div>
+          <label for="parca">Parça Adı</label>
+          <input id="parca" type="text" placeholder="Örn: Gövde sacı" />
+        </div>
+        <div>
+          <label for="miktar">Miktar</label>
+          <input id="miktar" type="number" step="0.01" value="1" />
+        </div>
+        <div>
+          <label for="birimFiyat">Malzeme Birim Fiyatı</label>
+          <input id="birimFiyat" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="paraBirimi">Para Birimi</label>
+          <select id="paraBirimi">
+            <option value="TRY">TRY</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+        <div>
+          <label for="malzemeTipi">Malzeme Tipi</label>
+          <select id="malzemeTipi">
+            <option value="metal">Metal</option>
+            <option value="amelta">Amelta</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </div>
+        <div>
+          <label for="kaynakSaat">Kaynak (saat)</label>
+          <input id="kaynakSaat" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="talasSaat">Talaşlı (saat)</label>
+          <input id="talasSaat" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="montajSaat">Montaj (saat)</label>
+          <input id="montajSaat" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="boyaSaat">Boya (saat)</label>
+          <input id="boyaSaat" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="elektrikKwh">Elektrik (kWh)</label>
+          <input id="elektrikKwh" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="suM3">Su (m³)</label>
+          <input id="suM3" type="number" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="yakitLt">Yakıt (L)</label>
+          <input id="yakitLt" type="number" step="0.01" value="0" />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="ekleBtn">BOM Satırı Ekle</button>
+    </section>
+
+    <section class="card" style="margin-top:16px;">
+      <h2>4) BOM Tablosu ve Sonuç</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Parça</th>
+            <th>Malzeme Maliyeti (TRY)</th>
+            <th>İşçilik (TRY)</th>
+            <th>Enerji + Su + Yakıt (TRY)</th>
+            <th>Toplam (TRY)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="bomBody"></tbody>
+      </table>
+
+      <div class="totals">
+        <div class="metric">
+          <div class="label">Toplam Malzeme</div>
+          <div class="value" id="tMalzeme">0 TRY</div>
+        </div>
+        <div class="metric">
+          <div class="label">Toplam İşçilik</div>
+          <div class="value" id="tIscilik">0 TRY</div>
+        </div>
+        <div class="metric">
+          <div class="label">Toplam Değişken Gider</div>
+          <div class="value" id="tDegisken">0 TRY</div>
+        </div>
+        <div class="metric">
+          <div class="label">Makina Başına Sigorta Payı</div>
+          <div class="value" id="tSigorta">0 TRY</div>
+        </div>
+        <div class="metric">
+          <div class="label">Genel Toplam</div>
+          <div class="value" id="tGenel">0 TRY</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const bom = [];
+
+    const ids = [
+      'kurUsd','kurEur','elektrikBirim','suBirim','sigortaAylik','aylikUretim',
+      'yakitFiyati','metalSabit','ameltaSabit','uKaynak','uTalas','uMontaj','uBoya'
+    ];
+
+    const getNum = (id) => Number(document.getElementById(id).value || 0);
+    const fmt = (n) => `${n.toLocaleString('tr-TR', { maximumFractionDigits: 2 })} TRY`;
+
+    function kurDonustur(price, currency) {
+      if (currency === 'USD') return price * getNum('kurUsd');
+      if (currency === 'EUR') return price * getNum('kurEur');
+      return price;
+    }
+
+    function hesaplaKalem(item) {
+      const materialBase = kurDonustur(item.unitPrice, item.currency) * item.qty;
+      const materialMultiplier = item.materialType === 'metal'
+        ? getNum('metalSabit')
+        : item.materialType === 'amelta'
+          ? getNum('ameltaSabit')
+          : 1;
+      const materialCost = materialBase * materialMultiplier;
+
+      const laborCost =
+        (item.weldH * getNum('uKaynak')) +
+        (item.machH * getNum('uTalas')) +
+        (item.assemH * getNum('uMontaj')) +
+        (item.paintH * getNum('uBoya'));
+
+      const utilityCost =
+        (item.kwh * getNum('elektrikBirim')) +
+        (item.water * getNum('suBirim')) +
+        (item.fuel * getNum('yakitFiyati'));
+
+      return {
+        materialCost,
+        laborCost,
+        utilityCost,
+        total: materialCost + laborCost + utilityCost
+      };
+    }
+
+    function render() {
+      const tbody = document.getElementById('bomBody');
+      tbody.innerHTML = '';
+
+      let m = 0, l = 0, u = 0;
+
+      bom.forEach((item, idx) => {
+        const calc = hesaplaKalem(item);
+        m += calc.materialCost;
+        l += calc.laborCost;
+        u += calc.utilityCost;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${fmt(calc.materialCost)}</td>
+          <td>${fmt(calc.laborCost)}</td>
+          <td>${fmt(calc.utilityCost)}</td>
+          <td><strong>${fmt(calc.total)}</strong></td>
+          <td><button class="btn btn-danger" data-del="${idx}">Sil</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const insurancePerMachine = getNum('aylikUretim') > 0
+        ? getNum('sigortaAylik') / getNum('aylikUretim')
+        : 0;
+      const total = m + l + u + insurancePerMachine;
+
+      document.getElementById('tMalzeme').textContent = fmt(m);
+      document.getElementById('tIscilik').textContent = fmt(l);
+      document.getElementById('tDegisken').textContent = fmt(u);
+      document.getElementById('tSigorta').textContent = fmt(insurancePerMachine);
+      document.getElementById('tGenel').textContent = fmt(total);
+
+      tbody.querySelectorAll('button[data-del]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.getAttribute('data-del'));
+          bom.splice(i, 1);
+          render();
+        });
+      });
+    }
+
+    document.getElementById('ekleBtn').addEventListener('click', () => {
+      const name = document.getElementById('parca').value.trim();
+      if (!name) {
+        alert('Parça adı giriniz.');
+        return;
+      }
+
+      bom.push({
+        name,
+        qty: getNum('miktar'),
+        unitPrice: getNum('birimFiyat'),
+        currency: document.getElementById('paraBirimi').value,
+        materialType: document.getElementById('malzemeTipi').value,
+        weldH: getNum('kaynakSaat'),
+        machH: getNum('talasSaat'),
+        assemH: getNum('montajSaat'),
+        paintH: getNum('boyaSaat'),
+        kwh: getNum('elektrikKwh'),
+        water: getNum('suM3'),
+        fuel: getNum('yakitLt')
+      });
+
+      document.getElementById('parca').value = '';
+      render();
+    });
+
+    ids.forEach((id) => document.getElementById(id).addEventListener('input', render));
+
+    bom.push({
+      name: 'Deneme Şase', qty: 1, unitPrice: 1200, currency: 'USD', materialType: 'metal',
+      weldH: 2.5, machH: 1.2, assemH: 3, paintH: 1, kwh: 18, water: 0.5, fuel: 4
+    });
+    render();
+  </script>
+</body>
+</html>
