@@ -1,12 +1,6 @@
 name: Build Ecem Android APK
 
 on:
-  push:
-    branches:
-      - ecem-yemek-app-build
-    paths:
-      - "ecem-build/**"
-      - ".github/workflows/build-ecem-apk.yml"
   workflow_dispatch:
 
 jobs:

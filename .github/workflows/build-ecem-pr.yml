@@ -1,11 +1,7 @@
 name: Temporary Ecem APK Build
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "ecem-build/**"
+  workflow_dispatch:
 
 jobs:
   build:
